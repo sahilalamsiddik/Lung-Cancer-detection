@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints
+.vscode/
+.idea/
+lung_cancer_MRI_dataset/
+uploads/
+static/uploaded.jpg
+static/heatmap.jpg
+static/cancer_heatmap.jpg
+lung_cancer_model.h5
