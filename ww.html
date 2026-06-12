@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Pulmo Vision – Lung Cancer Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root {
+      --color-dark: #1B3C53;
+      --color-mid: #234C6A;
+      --color-light-mid: #456882;
+      --color-light: #E3E3E3;
+      --radius: 12px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #102030;
+      color: #fff;
+    }
+
+    /* Navbar */
+    .navbar {
+      background: #1B3C53;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .navbar-brand {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .nav-link {
+      margin-left: 12px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      background: #234C6A;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .nav-link.active {
+      background: #456882;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .card {
+      background: #162635;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .field-input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #456882;
+      background: #0d1a26;
+      color: #fff;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+    }
+
+    .btn-primary {
+      background: #456882;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #E3E3E3;
+    }
+
+    .image-preview {
+      border: 1px dashed #456882;
+      padding: 15px;
+      min-height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f1a25;
+      border-radius: 8px;
+    }
+
+    .image-preview img {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 8px;
+    }
+
+    .loader-bar {
+      height: 4px;
+      background: #345;
+      border-radius: 4px;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .loader-inner {
+      height: 100%;
+      width: 0%;
+      background: #789;
+      border-radius: 4px;
+    }
+
+    .result-label { opacity: 0.8; }
+    .status-pill {
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: #345;
+      display: inline-block;
+      margin-left: 6px;
+    }
+
+    .status-pill.danger { background: #802020; }
+    .status-pill.warning { background: #7a6b1f; }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="navbar-brand">Pulmo Vision</div>
+    <div>
+      <button class="nav-link active" data-section="home">Home</button>
+      <button class="nav-link" data-section="prediction">Prediction</button>
+      <button class="nav-link" data-section="help">Help</button>
+      <button class="nav-link" data-section="profile">Profile</button>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- HOME -->
+    <section id="home" class="page active">
+      <div class="card">
+        <h2>Welcome to Pulmo Vision</h2>
+        <p>An AI-assisted tool to help detect lung cancer from CT & X-ray scans.</p>
+      </div>
+    </section>
+
+    <!-- PREDICTION -->
+    <section id="prediction" class="page">
+      <div class="card">
+        <h2>Lung Cancer Detection</h2>
+      </div>
+
+      <div class="card">
+        <label>Upload Image</label>
+        <input type="file" id="imageInput" class="field-input" accept="image/*">
+
+        <div class="image-preview" id="previewBox">
+          <span id="previewText">No image selected</span>
+          <img id="previewImage" style="display:none;">
+        </div>
+
+        <br>
+
+        <button class="btn btn-primary" id="submitBtn" disabled>Submit</button>
+        <button class="btn btn-outline" id="clearBtn">Clear</button>
+
+        <div class="loader-bar" id="loaderBar">
+          <div class="loader-inner" id="loaderInner"></div>
+        </div>
+      </div>
+
+      <div class="card" id="resultCard" style="display:none;">
+        <h3>Prediction Result</h3>
+
+        <p>
+          Status:
+          <span class="status-pill" id="statusPill">Pending</span>
+        </p>
+
+        <p><span class="result-label">Finding:</span> <b id="findingValue">-</b></p>
+        <p><span class="result-label">Probability:</span> <b id="probabilityValue">-</b></p>
+        <p><span class="result-label">Stage:</span> <b id="stageValue">-</b></p>
+
+        <p><span class="result-label">Model Notes:</span></p>
+        <p id="notesValue">-</p>
+      </div>
+    </section>
+
+    <!-- HELP -->
+    <section id="help" class="page">
+      <div class="card">
+        <h2>Help</h2>
+        <p>Upload CT/X-ray and click Submit for prediction.</p>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="profile" class="page">
+      <div class="card">
+        <h2>Profile</h2>
+        <p>Simple profile page.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+
+    // --------------------------
+    // Navigation (simple, safe)
+    // --------------------------
+    const navLinks = document.querySelectorAll(".nav-link");
+    const pages = document.querySelectorAll(".page");
+
+    navLinks.forEach(btn => {
+      btn.addEventListener("click", () => {
+        navLinks.forEach(n => n.classList.remove("active"));
+        btn.classList.add("active");
+
+        pages.forEach(p => p.classList.remove("active"));
+        document.getElementById(btn.dataset.section).classList.add("active");
+      });
+    });
+
+    // --------------------------
+    // Image Preview
+    // --------------------------
+    const imageInput = document.getElementById("imageInput");
+    const previewBox = document.getElementById("previewBox");
+    const previewText = document.getElementById("previewText");
+    const previewImage = document.getElementById("previewImage");
+    const submitBtn = document.getElementById("submitBtn");
+
+    imageInput.addEventListener("change", () => {
+      const file = imageInput.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        previewImage.src = e.target.result;
+        previewText.style.display = "none";
+        previewImage.style.display = "block";
+        submitBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      imageInput.value = "";
+      previewImage.style.display = "none";
+      previewText.style.display = "block";
+      submitBtn.disabled = true;
+    });
+
+    // --------------------------
+    // Loader
+    // --------------------------
+    const loaderBar = document.getElementById("loaderBar");
+    const loaderInner = document.getElementById("loaderInner");
+
+    function showLoader() {
+      loaderBar.style.display = "block";
+      loaderInner.style.width = "0%";
+
+      return new Promise(resolve => {
+        setTimeout(() => {
+          loaderInner.style.transition = "width 1.2s";
+          loaderInner.style.width = "100%";
+        }, 50);
+
+        setTimeout(() => {
+          loaderBar.style.display = "none";
+          resolve();
+        }, 1300);
+      });
+    }
+
+    // --------------------------
+    // Submit → Backend Call
+    // --------------------------
+    const resultCard = document.getElementById("resultCard");
+
+    submitBtn.addEventListener("click", async () => {
+      const file = imageInput.files[0];
+      if (!file) return alert("Select an image first.");
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting…";
+
+      await showLoader();
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("modality", "ct");
+
+      try {
+        const res = await fetch("http://127.0.0.1:5000/predict", {
+          method: "POST",
+          body: formData
+        });
+
+        const json = await res.json();
+
+        if (json.status !== "success") {
+          alert(json.message || "Error from backend");
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Submit";
+          return;
+        }
+
+        const data = json.data;
+
+        // Fill UI
+        resultCard.style.display = "block";
+
+        document.getElementById("findingValue").textContent = data.result;
+        document.getElementById("probabilityValue").textContent = data.confidence + "%";
+        document.getElementById("stageValue").textContent = data.stage;
+        document.getElementById("notesValue").innerHTML = "Prediction received.";
+
+        const pill = document.getElementById("statusPill");
+        pill.classList.remove("danger", "warning");
+
+        if (data.result === "CANCER") {
+          pill.textContent = "Cancer Detected";
+          pill.classList.add("danger");
+        } else {
+          pill.textContent = "No Cancer Found";
+        }
+
+        // heatmap
+        if (data.heatmap) {
+          document.getElementById("notesValue").innerHTML +=
+            `<br><br><img src="http://127.0.0.1:5000/${data.heatmap}" width="180">`;
+        }
+
+      } catch (err) {
+        alert("Failed: " + err.message);
+      }
+
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit";
+    });
+
+  </script>
+
+</body>
+</html>
