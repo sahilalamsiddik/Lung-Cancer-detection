@@ -1,0 +1,1198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Pulmo Vision – Lung Cancer Detection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Simple base styles -->
+  <style>
+    :root {
+      --color-dark: #1B3C53;
+      --color-mid: #234C6A;
+      --color-light-mid: #456882;
+      --color-light: #E3E3E3;
+      --radius: 12px;
+      --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: linear-gradient(135deg, var(--color-dark), #101c28);
+      color: #f9fafb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: linear-gradient(90deg, var(--color-dark), var(--color-mid));
+      padding: 0.75rem 1.25rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, var(--color-light),
+        var(--color-light-mid));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--color-dark);
+      font-weight: 800;
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      padding: 0.4rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      opacity: 0.9;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease,
+        border-color 0.2s ease, opacity 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nav-link:hover {
+      background: rgba(227, 227, 227, 0.1);
+      border-color: rgba(227, 227, 227, 0.3);
+      transform: translateY(-1px);
+      opacity: 1;
+    }
+
+    .nav-link.active {
+      background: var(--color-light-mid);
+      border-color: var(--color-light);
+      color: var(--color-light);
+      opacity: 1;
+    }
+
+    /* Layout */
+    .container {
+      flex: 1;
+      padding: 1.5rem 1.25rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .page {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Cards & sections */
+    .card {
+      background: rgba(22, 40, 60, 0.94);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(227, 227, 227, 0.04);
+      backdrop-filter: blur(10px);
+    }
+
+    .card-header {
+      margin-bottom: 0.6rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(69, 104, 130, 0.4);
+      border: 1px solid rgba(227, 227, 227, 0.3);
+    }
+
+    .card-body {
+      color: #e5e7eb;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    ul {
+      padding-left: 1.1rem;
+      margin-top: 0.4rem;
+    }
+
+    li + li {
+      margin-top: 0.2rem;
+    }
+
+    .muted {
+      color: #cbd5f5;
+      opacity: 0.8;
+      font-size: 0.9rem;
+    }
+
+    h1, h2 {
+      font-weight: 650;
+    }
+
+    .hero-title {
+      font-size: 1.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .hero-subtitle {
+      font-size: 0.95rem;
+      max-width: 620px;
+      color: #cbd5f5;
+      margin-bottom: 0.8rem;
+    }
+
+    .tagline {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: #cbd5f5;
+      opacity: 0.85;
+      margin-bottom: 0.5rem;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.35rem;
+    }
+
+    .pill {
+      padding: 0.15rem 0.55rem;
+      font-size: 0.75rem;
+      border-radius: 999px;
+      background: rgba(69, 104, 130, 0.3);
+      border: 1px solid rgba(227, 227, 227, 0.25);
+    }
+
+    /* Buttons & inputs */
+    .btn {
+      border-radius: 999px;
+      border: none;
+      padding: 0.55rem 1.1rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.2s ease,
+        background 0.2s ease;
+      box-shadow: 0 7px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-light-mid),
+        var(--color-mid));
+      color: #f9fafb;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+      opacity: 0.95;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(227, 227, 227, 0.5);
+      color: #e5e7eb;
+      box-shadow: none;
+    }
+
+    .btn-outline:hover {
+      background: rgba(227, 227, 227, 0.08);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .field-group {
+      margin-bottom: 0.8rem;
+    }
+
+    .field-label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      color: #d1d5db;
+    }
+
+    .field-input,
+    .field-select,
+    .field-textarea {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid rgba(227, 227, 227, 0.35);
+      background: rgba(13, 25, 38, 0.9);
+      color: #f9fafb;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease,
+        background 0.15s ease;
+    }
+
+    .field-input:focus,
+    .field-select:focus,
+    .field-textarea:focus {
+      border-color: var(--color-light-mid);
+      box-shadow: 0 0 0 1px rgba(69, 104, 130, 0.8);
+      background: rgba(13, 25, 38, 0.95);
+    }
+
+    .field-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .radio-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .radio-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      border: 1px solid rgba(227, 227, 227, 0.5);
+      font-size: 0.85rem;
+      cursor: pointer;
+      background: rgba(14, 26, 40, 0.9);
+      transition: background 0.15s ease, border-color 0.15s ease,
+        transform 0.1s ease;
+    }
+
+    .radio-chip input {
+      accent-color: var(--color-light-mid);
+    }
+
+    .radio-chip.active {
+      background: rgba(69, 104, 130, 0.5);
+      border-color: var(--color-light-mid);
+      transform: translateY(-1px);
+    }
+
+    /* Prediction specific */
+    .prediction-layout {
+      display: grid;
+      gap: 1rem;
+    }
+
+    @media (min-width: 900px) {
+      .prediction-layout {
+        grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.1fr);
+      }
+    }
+
+    .image-preview {
+      border-radius: 10px;
+      border: 1px dashed rgba(227, 227, 227, 0.4);
+      background: rgba(10, 20, 32, 0.85);
+      padding: 0.8rem;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .image-preview img {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .image-preview.placeholder {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      text-align: center;
+    }
+
+    .preview-label {
+      position: absolute;
+      top: 0.4rem;
+      left: 0.6rem;
+      font-size: 0.75rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 999px;
+      background: rgba(27, 60, 83, 0.95);
+      border: 1px solid rgba(227, 227, 227, 0.5);
+    }
+
+    .loader-bar {
+      width: 100%;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(55, 65, 81, 0.8);
+      overflow: hidden;
+      margin-top: 0.6rem;
+      display: none;
+    }
+
+    .loader-bar-inner {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--color-light-mid),
+        var(--color-light));
+      transition: width 0.7s ease;
+    }
+
+    .result-grid {
+      display: grid;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .result-label {
+      color: #cbd5e1;
+      opacity: 0.9;
+    }
+
+    .result-value {
+      font-weight: 500;
+      color: #e5e7eb;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      color: #bbf7d0;
+      margin-left: 0.3rem;
+    }
+
+    .status-pill.danger {
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.7);
+      color: #fecaca;
+    }
+
+    .status-pill.warning {
+      background: rgba(250, 204, 21, 0.12);
+      border-color: rgba(250, 204, 21, 0.7);
+      color: #fef3c7;
+    }
+
+    /* Help & Profile */
+    .step-list {
+      counter-reset: step;
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .step-list li {
+      counter-increment: step;
+      margin-bottom: 0.6rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+
+    .step-index {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: var(--color-light-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      font-size: 0.9rem;
+    }
+
+    .footer {
+      padding: 0.7rem 1.2rem 1rem;
+      font-size: 0.8rem;
+      text-align: center;
+      color: #9ca3af;
+      background: rgba(10, 18, 28, 0.95);
+      border-top: 1px solid rgba(15, 23, 42, 0.9);
+    }
+
+    .footer span {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="navbar-brand">
+      <div class="brand-logo">PV</div>
+      <div>
+        <div>Pulmo Vision</div>
+        <div class="muted" style="font-size: 0.75rem;">
+          AI–assisted lung cancer insights
+        </div>
+      </div>
+    </div>
+
+    <nav class="navbar-nav">
+      <button class="nav-link active" data-section="home">Home</button>
+      <button class="nav-link" data-section="prediction">Prediction</button>
+      <button class="nav-link" data-section="help">Help</button>
+      <button class="nav-link" data-section="profile">Profile</button>
+    </nav>
+  </header>
+
+  <!-- Main content -->
+  <main class="container">
+    <!-- HOME PAGE -->
+    <section class="page active" id="home">
+      <div class="card">
+        <div class="tagline">Lung health • Early detection • Awareness</div>
+        <h1 class="hero-title">Understand lung cancer before it understands you.</h1>
+        <p class="hero-subtitle">
+          Pulmo Vision is designed to assist with early suspicion of lung cancer
+          from chest CT/X-ray images. It does not replace a doctor. Every
+          prediction must be reviewed and confirmed by a qualified clinician.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:0.4rem;">
+          <button class="btn btn-primary" data-section="prediction">
+            Go to Prediction
+          </button>
+          <button class="btn btn-outline" data-section="help">
+            How to use this site
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-3">
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Effects on the body</h2>
+            <span class="badge">Impact</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li>Persistent cough, chest pain and shortness of breath.</li>
+              <li>Unexplained weight loss and continuous tiredness.</li>
+              <li>Reduced ability to do daily activities or exercise.</li>
+              <li>In advanced stages, spread to brain, bones or liver.</li>
+            </ul>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">How to reduce risk</h2>
+            <span class="badge">Prevention</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li>Avoid smoking; seek help to quit if you already smoke.</li>
+              <li>Stay away from second-hand smoke and polluted air.</li>
+              <li>Use masks and proper ventilation in dusty workplaces.</li>
+              <li>Exercise regularly and maintain a balanced diet.</li>
+            </ul>
+            <div class="pill-row">
+              <span class="pill">No tobacco</span>
+              <span class="pill">Clean air</span>
+              <span class="pill">Regular checkups</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Common reasons</h2>
+            <span class="badge">Causes</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li>Cigarette, bidi and hookah smoking.</li>
+              <li>Indoor and outdoor air pollution.</li>
+              <li>Occupational exposure (asbestos, chemicals, dust).</li>
+              <li>Family history and genetic factors in some cases.</li>
+            </ul>
+            <p class="muted" style="margin-top:0.4rem;">
+              The risk may still be present even without smoking, so
+              long-lasting symptoms should always be checked by a doctor.
+            </p>
+          </div>
+        </article>
+      </div>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">When should you seek medical advice?</h2>
+          <span class="badge">Important</span>
+        </div>
+        <div class="card-body">
+          <ul>
+            <li>Cough lasting more than a few weeks, especially with blood.</li>
+            <li>Breathing difficulty or chest pain that is not improving.</li>
+            <li>Sudden weight loss or loss of appetite without clear reason.</li>
+            <li>Any abnormal lung scan result reported by a radiologist.</li>
+          </ul>
+          <p class="muted" style="margin-top:0.5rem;">
+            Pulmo Vision is a support tool only. Always consult a doctor for a final
+            diagnosis and treatment plan.
+          </p>
+        </div>
+      </section>
+    </section>
+
+    <!-- PREDICTION PAGE -->
+    <section class="page" id="prediction">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Lung Scan Prediction</h2>
+          <span class="badge">Beta</span>
+        </div>
+        <div class="card-body">
+          <p class="muted">
+            Upload a chest CT or X-ray image. After you click <strong>Predict</strong>, the
+            site will send the image to your model and show the returned details.
+            You can connect your own backend in the JavaScript section.
+          </p>
+        </div>
+      </div>
+
+      <div class="prediction-layout">
+        <!-- Left: form + preview -->
+        <section class="card">
+          <div class="card-header">
+            <h3 class="card-title">Input image</h3>
+            <span class="badge">Step 1</span>
+          </div>
+          <div class="card-body">
+            <div class="field-group">
+              <label class="field-label">Modality type</label>
+              <div class="radio-row" id="modalityRadios">
+                <label class="radio-chip active">
+                  <input type="radio" name="modality" value="ct" checked />
+                  CT Scan
+                </label>
+                <label class="radio-chip">
+                  <input type="radio" name="modality" value="xray" />
+                  X-ray
+                </label>
+                <label class="radio-chip">
+                  <input type="radio" name="modality" value="other" />
+                  Other chest image
+                </label>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="imageInput" class="field-label">Select image file</label>
+              <input
+                class="field-input"
+                type="file"
+                id="imageInput"
+                accept="image/*"
+              />
+              <p class="muted" style="margin-top:0.25rem;">
+                Recommended: clear, high-resolution .png / .jpg / .jpeg image.
+              </p>
+            </div>
+
+            <div class="image-preview placeholder" id="imagePreviewBox">
+              <span class="preview-label">Preview</span>
+              <span id="previewPlaceholder">
+                No image selected yet.<br />Choose a lung CT or X-ray to begin.
+              </span>
+              <img id="previewImage" alt="Scan preview" />
+            </div>
+
+            <div style="margin-top:0.8rem;display:flex;flex-wrap:wrap;gap:0.5rem;">
+              <button class="btn btn-primary" id="predictBtn" disabled>
+                Predict
+              </button>
+              <button class="btn btn-outline" id="clearImageBtn">
+                Clear
+              </button>
+            </div>
+
+            <div class="loader-bar" id="loaderBar">
+              <div class="loader-bar-inner" id="loaderInner"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: results -->
+        <section class="card">
+          <div class="card-header">
+            <h3 class="card-title">Prediction details</h3>
+            <span class="badge">Step 2</span>
+          </div>
+          <div class="card-body" id="resultBox">
+            <p class="muted" id="resultHint">
+              Prediction results will appear here after you upload an image and
+              click <strong>Predict</strong>.
+            </p>
+
+            <div id="resultContent" style="display:none;">
+              <div style="margin-bottom:0.4rem;">
+                <span class="result-label">Overall status:</span>
+                <span class="status-pill" id="statusTag">
+                  Pending
+                </span>
+              </div>
+
+              <div class="result-grid">
+                <div class="result-row">
+                  <span class="result-label">Primary finding</span>
+                  <span class="result-value" id="findingValue">–</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Cancer probability</span>
+                  <span class="result-value" id="probabilityValue">–</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Estimated stage</span>
+                  <span class="result-value" id="stageValue">–</span>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Side / location</span>
+                  <span class="result-value" id="locationValue">–</span>
+                </div>
+              </div>
+
+              <div style="margin-top:0.7rem;">
+                <span class="result-label">Model notes</span>
+                <p class="muted" id="notesValue" style="margin-top:0.25rem;">
+                  –
+                </p>
+              </div>
+
+              <div style="margin-top:0.7rem;">
+                <span class="result-label">Important reminder</span>
+                <p class="muted" style="margin-top:0.25rem;">
+                  These results are generated by an AI model and may be wrong.
+                  A trained radiologist or doctor must confirm all findings and
+                  decide the next steps.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- HELP PAGE -->
+    <section class="page" id="help">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">How to use Pulmo Vision</h2>
+          <span class="badge">Guide</span>
+        </div>
+        <div class="card-body">
+          <ol class="step-list">
+            <li>
+              <div class="step-index">1</div>
+              <div class="step-text">
+                Go to the <strong>Prediction</strong> tab from the top navbar.
+              </div>
+            </li>
+            <li>
+              <div class="step-index">2</div>
+              <div class="step-text">
+                Choose the correct <strong>modality type</strong> (CT, X-ray or
+                other chest image).
+              </div>
+            </li>
+            <li>
+              <div class="step-index">3</div>
+              <div class="step-text">
+                Click on <strong>Select image file</strong> and upload the scan
+                that you want to analyse.
+              </div>
+            </li>
+            <li>
+              <div class="step-index">4</div>
+              <div class="step-text">
+                Check the <strong>preview</strong> on the left to confirm that
+                the image looks correct (no rotation or cropping issues).
+              </div>
+            </li>
+            <li>
+              <div class="step-index">5</div>
+              <div class="step-text">
+                Press <strong>Predict</strong>. The model will process the image
+                and show the predicted probability, stage and notes on the
+                right.
+              </div>
+            </li>
+            <li>
+              <div class="step-index">6</div>
+              <div class="step-text">
+                Share the scan and the model output with a
+                <strong>qualified doctor</strong> for final interpretation.
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="grid grid-2">
+        <section class="card">
+          <div class="card-header">
+            <h3 class="card-title">Limitations</h3>
+            <span class="badge">Read</span>
+          </div>
+          <div class="card-body">
+            <ul>
+              <li>The model can be wrong or uncertain.</li>
+              <li>Low-quality or noisy scans reduce accuracy.</li>
+              <li>Non-cancer lung disease can look similar on images.</li>
+              <li>
+                This tool is not approved as a standalone medical device in
+                most countries.
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <h3 class="card-title">Connect your backend model</h3>
+            <span class="badge">Developer</span>
+          </div>
+          <div class="card-body">
+            <p class="muted">
+              In the JavaScript at the bottom of this file, look for the
+              comment <strong>"TODO: Replace mockResult with your API"</strong>.
+              You can send a <strong>FormData</strong> with the image and
+              modality to your Flask / FastAPI / Node.js endpoint and update the
+              result area with the JSON response.
+            </p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- PROFILE PAGE -->
+    <section class="page" id="profile">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Profile</h2>
+          <span class="badge">Optional</span>
+        </div>
+        <div class="card-body">
+          <p class="muted" style="margin-bottom:0.7rem;">
+            This information is stored only in your browser using
+            <strong>localStorage</strong>. It is not sent to any server by this
+            page. You can use it to quickly save basic patient context.
+          </p>
+
+          <form id="profileForm">
+            <div class="grid grid-2">
+              <div class="field-group">
+                <label class="field-label" for="profileName">
+                  Patient name
+                </label>
+                <input
+                  class="field-input"
+                  type="text"
+                  id="profileName"
+                  placeholder="e.g., Rohan Kumar"
+                />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="profileAge">Age</label>
+                <input
+                  class="field-input"
+                  type="number"
+                  id="profileAge"
+                  min="0"
+                  max="120"
+                  placeholder="e.g., 54"
+                />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="profileGender">
+                  Biological sex
+                </label>
+                <select class="field-select" id="profileGender">
+                  <option value="">Select</option>
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="other">Other / Prefer not</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="profileSmoking">
+                  Smoking history
+                </label>
+                <select class="field-select" id="profileSmoking">
+                  <option value="">Select</option>
+                  <option value="never">Never smoked</option>
+                  <option value="former">Former smoker</option>
+                  <option value="current">Current smoker</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label class="field-label" for="profileNotes">
+                Clinical notes / symptoms
+              </label>
+              <textarea
+                class="field-textarea"
+                id="profileNotes"
+                placeholder="E.g., chronic cough for 3 months, weight loss, etc."
+              ></textarea>
+            </div>
+
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+              <button type="button" class="btn btn-primary" id="saveProfileBtn">
+                Save profile
+              </button>
+              <button type="button" class="btn btn-outline" id="clearProfileBtn">
+                Clear profile
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Pulmo Vision &copy; <span id="yearSpan"></span>. For educational and
+      research use only. Not a replacement for professional medical advice.</span>
+  </footer>
+
+  <!-- JavaScript (no external libraries) -->
+ <script>
+// ------------------------
+// CLEAN, SAFE NAVIGATION
+// ------------------------
+const navLinks = document.querySelectorAll(".nav-link");
+const pages = document.querySelectorAll(".page");
+
+// Show section
+function showSection(id) {
+  pages.forEach(p => p.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  navLinks.forEach(btn => btn.classList.remove("active"));
+  document.querySelector(`[data-section="${id}"]`).classList.add("active");
+}
+
+navLinks.forEach(btn => {
+  btn.addEventListener("click", () => {
+    showSection(btn.dataset.section);
+  });
+});
+
+// ------------------------
+// Prediction: Modality Chips
+// ------------------------
+const modalityContainer = document.getElementById("modalityRadios");
+modalityContainer.addEventListener("change", () => {
+  modalityContainer.querySelectorAll(".radio-chip").forEach(chip => {
+    chip.classList.toggle("active", chip.querySelector("input").checked);
+  });
+});
+
+// ------------------------
+// Image Preview
+// ------------------------
+const imageInput = document.getElementById("imageInput");
+const previewImage = document.getElementById("previewImage");
+const previewPlaceholder = document.getElementById("previewPlaceholder");
+const imagePreviewBox = document.getElementById("imagePreviewBox");
+const predictBtn = document.getElementById("predictBtn");
+const clearImageBtn = document.getElementById("clearImageBtn");
+
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (!file) {
+    resetPreview();
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    previewImage.src = e.target.result;
+    previewImage.style.display = "block";
+    previewPlaceholder.style.display = "none";
+    imagePreviewBox.classList.remove("placeholder");
+    predictBtn.disabled = false;
+  };
+  reader.readAsDataURL(file);
+});
+
+function resetPreview() {
+  imageInput.value = "";
+  previewImage.src = "";
+  previewPlaceholder.style.display = "inline";
+  previewImage.style.display = "none";
+  imagePreviewBox.classList.add("placeholder");
+  predictBtn.disabled = true;
+}
+
+clearImageBtn.addEventListener("click", resetPreview);
+
+// ------------------------
+// Result Elements
+// ------------------------
+const loaderBar = document.getElementById("loaderBar");
+const loaderInner = document.getElementById("loaderInner");
+const resultHint = document.getElementById("resultHint");
+const resultContent = document.getElementById("resultContent");
+
+const statusTag = document.getElementById("statusTag");
+const findingValue = document.getElementById("findingValue");
+const probabilityValue = document.getElementById("probabilityValue");
+const stageValue = document.getElementById("stageValue");
+const locationValue = document.getElementById("locationValue");
+const notesValue = document.getElementById("notesValue");
+
+// Status pill
+function setStatusPill(level, text) {
+  statusTag.classList.remove("danger", "warning");
+  statusTag.textContent = text;
+
+  if (level === "medium") statusTag.classList.add("warning");
+  else if (level === "high") statusTag.classList.add("danger");
+}
+
+// Loader animation
+function showLoader(duration = 1200) {
+  loaderBar.style.display = "block";
+  loaderInner.style.width = "0%";
+  loaderInner.style.transition = "none";
+
+  requestAnimationFrame(() => {
+    loaderInner.style.transition = `width ${duration}ms ease`;
+    loaderInner.style.width = "100%";
+  });
+
+  return new Promise(res => {
+    setTimeout(() => {
+      loaderBar.style.display = "none";
+      res();
+    }, duration + 50);
+  });
+}
+
+// ------------------------
+// FINAL PREDICT FUNCTION
+// ------------------------
+async function handlePredict() {
+  const file = imageInput.files[0];
+  if (!file) return alert("Please select an image first.");
+
+  predictBtn.disabled = true;
+  predictBtn.textContent = "Predicting…";
+
+  await showLoader(1500);
+
+  const selectedModality =
+    document.querySelector('input[name="modality"]:checked')?.value || "ct";
+
+  const formData = new FormData();
+  formData.append("image", file);
+  formData.append("modality", selectedModality);
+
+  try {
+    const response = await fetch("http://127.0.0.1:5000/predict", {
+      method: "POST",
+      body: formData
+    });
+
+    const result = await response.json();
+
+    if (!result || result.status !== "success") {
+      alert("Backend Error: " + (result?.message || "Invalid response"));
+      predictBtn.disabled = false;
+      predictBtn.textContent = "Predict";
+      return;
+    }
+
+    const data = result.data;
+
+    resultHint.style.display = "none";
+    resultContent.style.display = "block";
+
+    const isCancer = data.result === "CANCER";
+    setStatusPill(isCancer ? "high" : "low", isCancer ? "Cancer Detected" : "No Cancer Found");
+
+    findingValue.textContent = data.result;
+    probabilityValue.textContent = data.confidence + " %";
+    stageValue.textContent = data.stage;
+    locationValue.textContent = "N/A";
+    notesValue.textContent = "AI model prediction retrieved successfully.";
+
+    if (data.heatmap) {
+      const url = "http://127.0.0.1:5000/" + data.heatmap;
+      notesValue.innerHTML += `<br><br><img src="${url}" width="180" style="border-radius:8px;">`;
+    }
+
+  } catch (err) {
+    alert("Prediction failed: " + err.message);
+  }
+
+  predictBtn.disabled = false;
+  predictBtn.textContent = "Predict";
+}
+
+predictBtn.addEventListener("click", handlePredict);
+
+// ------------------------
+// Profile + Footer
+// ------------------------
+const profileFields = {
+  name: document.getElementById("profileName"),
+  age: document.getElementById("profileAge"),
+  gender: document.getElementById("profileGender"),
+  smoking: document.getElementById("profileSmoking"),
+  notes: document.getElementById("profileNotes"),
+};
+
+const saveProfileBtn = document.getElementById("saveProfileBtn");
+const clearProfileBtn = document.getElementById("clearProfileBtn");
+const PROFILE_KEY = "pulmoVisionProfile";
+
+function loadProfile() {
+  const saved = localStorage.getItem(PROFILE_KEY);
+  if (!saved) return;
+
+  const data = JSON.parse(saved);
+  profileFields.name.value = data.name || "";
+  profileFields.age.value = data.age || "";
+  profileFields.gender.value = data.gender || "";
+  profileFields.smoking.value = data.smoking || "";
+  profileFields.notes.value = data.notes || "";
+}
+
+function saveProfile() {
+  const data = {
+    name: profileFields.name.value,
+    age: profileFields.age.value,
+    gender: profileFields.gender.value,
+    smoking: profileFields.smoking.value,
+    notes: profileFields.notes.value,
+  };
+
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(data));
+  alert("Profile saved.");
+}
+
+function clearProfile() {
+  localStorage.removeItem(PROFILE_KEY);
+  Object.values(profileFields).forEach(f => f.value = "");
+  alert("Profile cleared.");
+}
+
+saveProfileBtn.addEventListener("click", saveProfile);
+clearProfileBtn.addEventListener("click", clearProfile);
+loadProfile();
+
+document.getElementById("yearSpan").textContent = new Date().getFullYear();
+</script>
+
+
+</body>
+</html>                                                
