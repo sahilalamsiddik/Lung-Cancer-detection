@@ -39,7 +39,7 @@ async def predict(file: UploadFile = File(...)):
     return result
 
 
-# Serve heatmap image
+
 @app.get("/heatmap")
 def heatmap():
     return FileResponse("static/cancer_heatmap.jpg")
